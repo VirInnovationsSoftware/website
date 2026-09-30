@@ -65,7 +65,7 @@ const CapabilitiesSection = () => {
               className="border-t-2 pt-8 group cursor-pointer transition-all duration-300 border-accent/30 hover:border-accent hover:shadow-2xl hover:shadow-accent/20"
             >
               {cap.image ? (
-                <div className="mb-4 h-32 overflow-hidden rounded-lg">
+                <div className="mb-4 h-[162px] overflow-hidden rounded-lg">
                   <img
                     src={cap.image}
                     alt={cap.title}
