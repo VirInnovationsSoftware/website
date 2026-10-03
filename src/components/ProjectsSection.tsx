@@ -76,7 +76,7 @@ const productCategories: { id: string; title: string; icon: typeof Wrench; image
       },
       {
         title: "81mm Mortar Telemetry Bomb",
-        image: "/project-images/Slide 17 - 81MM Mortar Telemetry Bomb.png",
+        image: "/project-images/3.81mm Mortar Telemetry System.jpeg",
         description: "A telemetry-enabled 81mm mortar bomb designed for live tracking of projectile flight in real time. It transmits encrypted GNSS-based positional data to a receiver station for trajectory analysis and training support.",
         specs: ["GNSS Tracking", "≤5m Accuracy", "VHF/UHF Transmission", "5km LoS Range", "Telemetry Data Output", "IP65 Receiver"]
       },
@@ -174,7 +174,7 @@ const ProjectsSection = () => {
             Our Product Offerings
           </p>
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground">
-            Defence Technology Solutions
+            Defence Technology Solutions Delivered
           </h2>
         </motion.div>
 
@@ -302,7 +302,7 @@ const ProjectsSection = () => {
                     initial={{ opacity: 0, height: 0 }}
                     animate={isHovered ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="pt-4 -mt-2 border-t border-border/50 overflow-hidden"
+                    className="pt-4 -mt-2 -translate-y-[30%] border-t border-border/50 overflow-hidden"
                   >
                     <div className="flex items-center justify-between text-xs px-2">
                       <div className="flex items-center gap-1 text-accent truncate">

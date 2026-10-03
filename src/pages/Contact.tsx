@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Linkedin, Globe, Mail } from "lucide-react";
+import { Linkedin, Mail } from "lucide-react";
 
 const Contact = () => {
   return (
@@ -27,7 +27,7 @@ const Contact = () => {
                 We are always looking for talented engineers, designers, consultants, and passionate contributors to help us build the future of defence technology. Reach out — let's create something extraordinary together.
               </p>
 
-              <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+              <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
                 {/* LinkedIn */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
@@ -44,12 +44,9 @@ const Contact = () => {
                   >
                     <Linkedin className="w-8 h-8 text-white" />
                   </motion.div>
-                  <h3 className="text-lg font-serif font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
+                  <h3 className="text-lg font-serif font-bold text-foreground mb-6 group-hover:text-primary transition-colors">
                     LinkedIn
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    linkedin.com/company/militros
-                  </p>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -60,41 +57,6 @@ const Contact = () => {
                     className="group-hover:bg-accent group-hover:text-accent-foreground transition-colors"
                   >
                     Visit LinkedIn
-                  </Button>
-                </motion.div>
-
-                {/* Website */}
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  onClick={() => window.open('https://www.militros.ai', '_blank')}
-                  className="bg-card border border-border p-8 rounded-2xl hover:border-accent/50 hover:shadow-xl hover:shadow-accent/20 transition-all duration-300 group cursor-pointer"
-                >
-                  <motion.div 
-                    className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-2xl flex items-center justify-center mx-auto mb-6"
-                    whileHover={{ scale: 1.1, rotate: -5 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    <Globe className="w-8 h-8 text-white" />
-                  </motion.div>
-                  <h3 className="text-lg font-serif font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
-                    Website
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    www.militros.ai
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open('https://www.militros.ai', '_blank');
-                    }}
-                    className="group-hover:bg-accent group-hover:text-accent-foreground transition-colors"
-                  >
-                    Visit Website
                   </Button>
                 </motion.div>
 
@@ -113,12 +75,9 @@ const Contact = () => {
                   >
                     <Mail className="w-8 h-8 text-white" />
                   </motion.div>
-                  <h3 className="text-lg font-serif font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
+                  <h3 className="text-lg font-serif font-bold text-foreground mb-6 group-hover:text-primary transition-colors">
                     Email
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    admin@militros.ai
-                  </p>
                   <Button 
                     variant="outline" 
                     size="sm"
