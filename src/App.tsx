@@ -8,6 +8,8 @@ import Contact from "./pages/Contact";
 import Careers from "./pages/Careers";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/AdminLogin";
+import AdminCareers from "./pages/AdminCareers";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/careers" element={<Careers />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/careers" element={<AdminCareers />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

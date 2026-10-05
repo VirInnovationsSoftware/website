@@ -1,6 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Quote, Star, Target, Users } from "lucide-react";
+import { Quote, Star, Target, Users, Truck } from "lucide-react";
 
 interface Testimonial {
   name: string;
@@ -22,10 +22,10 @@ const stats = [
     description: "Average system precision"
   },
   {
-    icon: Users,
-    value: "50+",
-    label: "Defence Partners",
-    description: "Trusted military organizations"
+    icon: Truck,
+    value: "15+",
+    label: "Projects Delivered",
+    description: "Successfully delivered projects"
   },
   {
     icon: Star,

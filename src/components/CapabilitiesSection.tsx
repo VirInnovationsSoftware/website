@@ -62,7 +62,7 @@ const CapabilitiesSection = () => {
           {capabilities.map((cap, i) => (
             <div
               key={cap.title}
-              className="border-t-2 pt-8 group cursor-pointer transition-all duration-300 border-accent/30 hover:border-accent hover:shadow-2xl hover:shadow-accent/20"
+              className="border-t-2 px-4 pt-8 pb-8 group cursor-pointer transition-all duration-300 border-accent/30 hover:border-accent hover:shadow-2xl hover:shadow-accent/20"
             >
               {cap.image ? (
                 <div className="mb-4 h-[162px] overflow-hidden rounded-lg">

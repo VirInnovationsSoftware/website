@@ -1,737 +1,179 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Lock, Target, Zap, Eye, Cpu, Users, Award, Briefcase, MapPin, Plus, X, Edit, ExternalLink, Flame, Handshake, Lightbulb, BadgeCheck, TrendingUp } from "lucide-react";
+import { ArrowRight, Briefcase, Cpu, ExternalLink, Lightbulb, MapPin, Search, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { getOpenJobs, isJobsFeedConfigured, Job } from "@/lib/jobs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const LINKEDIN_JOBS_URL = "https://www.linkedin.com/company/virinnovations/jobs/";
 
 const Careers = () => {
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [showAddJobForm, setShowAddJobForm] = useState(false);
-  const [adminUsername, setAdminUsername] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [jobs, setJobs] = useState<any[]>([]);
-
-  // New job form state
-  const [newJob, setNewJob] = useState({
-    title: '',
-    department: '',
-    location: '',
-    type: 'Full-time',
-    jdFile: null as File | null,
-    requirements: [''],
-    applyLink: ''
-  });
-
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [jobsError, setJobsError] = useState(false);
+  const [query, setQuery] = useState("");
+  const [department, setDepartment] = useState("All departments");
+  const [location, setLocation] = useState("All locations");
+  const [employmentType, setEmploymentType] = useState("All employment types");
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const authStatus = localStorage.getItem('is_authenticated') === 'true';
-    const userRole = localStorage.getItem('user_role');
-    
-    console.log('Careers - Auth Status:', authStatus);
-    console.log('Careers - User Role:', userRole);
-    
-    setIsAuthenticated(authStatus);
-    setIsAdmin(authStatus && userRole === 'admin');
-
-    // Load jobs from localStorage or set default jobs
-    const storedJobs = localStorage.getItem('jobs');
-    if (storedJobs) {
-      try {
-        const parsedJobs = JSON.parse(storedJobs);
-        setJobs(parsedJobs || []);
-      } catch (error) {
-        console.error('Error parsing jobs from localStorage:', error);
-        setJobs([]);
-      }
-    } else {
-      // Set default sample jobs if no jobs exist
-      const defaultJobs = [
-        {
-          title: 'Senior Software Engineer',
-          department: 'Engineering',
-          location: 'Hyderabad',
-          type: 'Full-time',
-          description: 'We are looking for a skilled software engineer to join our defence technology team.',
-          requirements: ['5+ years of experience', 'Strong programming skills', 'Security clearance'],
-          applyLink: '#'
-        },
-        {
-          title: 'Defence Systems Analyst',
-          department: 'Operations',
-          location: 'Bangalore',
-          type: 'Full-time',
-          description: 'Analyze and optimize defence systems for maximum efficiency and reliability.',
-          requirements: ['3+ years of experience', 'Defense industry knowledge', 'Analytical skills'],
-          applyLink: '#'
-        }
-      ];
-      setJobs(defaultJobs);
-      localStorage.setItem('jobs', JSON.stringify(defaultJobs));
-    }
+    getOpenJobs()
+      .then(setJobs)
+      .catch((error) => { console.error("Unable to load jobs:", error); setJobsError(true); })
+      .finally(() => setJobsLoading(false));
   }, []);
 
-  // Listen for storage changes to sync with navbar
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const authStatus = localStorage.getItem('is_authenticated') === 'true';
-      const userRole = localStorage.getItem('user_role');
-      
-      console.log('Careers - Storage Change - Auth Status:', authStatus);
-      console.log('Careers - Storage Change - User Role:', userRole);
-      
-      setIsAuthenticated(authStatus);
-      setIsAdmin(authStatus && userRole === 'admin');
-    };
+  const departments = useMemo(() => [...new Set(jobs.map((job) => job.department).filter(Boolean))].sort(), [jobs]);
+  const locations = useMemo(() => [...new Set(jobs.map((job) => job.location).filter(Boolean))].sort(), [jobs]);
+  const employmentTypes = useMemo(() => [...new Set(jobs.map((job) => job.type).filter(Boolean))].sort(), [jobs]);
+  const filteredJobs = useMemo(() => jobs.filter((job) => {
+    const term = query.trim().toLowerCase();
+    const matchesQuery = !term || [job.title, job.department, job.location, job.type, job.experience, job.description, ...job.requirements, ...job.responsibilities, ...job.qualifications].some((value) => value.toLowerCase().includes(term));
+    return matchesQuery && (department === "All departments" || job.department === department) && (location === "All locations" || job.location === location) && (employmentType === "All employment types" || job.type === employmentType);
+  }), [jobs, query, department, location, employmentType]);
 
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also check periodically for auth changes
-    const interval = setInterval(handleStorageChange, 1000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
-
-  const handleAdminLogin = () => {
-    if (adminUsername === 'admin' && adminPassword === 'admin123') {
-      setIsAdmin(true);
-      setShowAdminLogin(false);
-      setLoginError('');
-    } else {
-      setLoginError('Invalid username or password');
-    }
-  };
-
-  const handleAddJob = async () => {
-    // For new jobs, require JD file. For editing jobs, JD file is optional
-    const isNewJob = editingIndex === null;
-    if (newJob.title && newJob.department && (isNewJob ? newJob.jdFile : true)) {
-      let jdFileData = null;
-      
-      // Convert file to base64 if it exists
-      if (newJob.jdFile) {
-        jdFileData = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve({
-            name: newJob.jdFile?.name,
-            type: newJob.jdFile?.type,
-            data: reader.result
-          });
-          reader.readAsDataURL(newJob.jdFile as File);
-        });
-      }
-      
-      const jobData = { 
-        ...newJob, 
-        requirements: newJob.requirements.filter(req => req.trim() !== ''),
-        jdFile: jdFileData || (editingIndex !== null ? jobs[editingIndex].jdFile : null)
-      };
-      
-      let updatedJobs;
-      if (editingIndex !== null) {
-        // Edit existing job
-        updatedJobs = [...jobs];
-        updatedJobs[editingIndex] = jobData;
-      } else {
-        // Add new job
-        updatedJobs = [...jobs, jobData];
-      }
-      
-      setJobs(updatedJobs);
-      localStorage.setItem('jobs', JSON.stringify(updatedJobs));
-      setNewJob({
-        title: '',
-        department: '',
-        location: '',
-        type: 'Full-time',
-        jdFile: null,
-        requirements: [''],
-        applyLink: ''
-      });
-      setEditingIndex(null);
-      setShowAddJobForm(false);
-    }
-  };
-
-  const handleEditJob = (index: number) => {
-    const jobToEdit = jobs[index];
-    setNewJob({
-      title: jobToEdit.title,
-      department: jobToEdit.department,
-      location: jobToEdit.location,
-      type: jobToEdit.type,
-      jdFile: null, // Reset file input when editing
-      requirements: [...jobToEdit.requirements],
-      applyLink: jobToEdit.applyLink || ''
-    });
-    setEditingIndex(index);
-    setShowAddJobForm(true);
-  };
-
-  const handleDeleteJob = (index: number) => {
-    const updatedJobs = jobs.filter((_, i) => i !== index);
-    setJobs(updatedJobs);
-    localStorage.setItem('jobs', JSON.stringify(updatedJobs));
-  };
-
-  const addRequirement = () => {
-    setNewJob({ ...newJob, requirements: [...newJob.requirements, ''] });
-  };
-
-  const updateRequirement = (index: number, value: string) => {
-    const updatedReqs = [...newJob.requirements];
-    updatedReqs[index] = value;
-    setNewJob({ ...newJob, requirements: updatedReqs });
-  };
-
-  const removeRequirement = (index: number) => {
-    setNewJob({ ...newJob, requirements: newJob.requirements.filter((_, i) => i !== index) });
-  };
+  const resetFilters = () => { setQuery(""); setDepartment("All departments"); setLocation("All locations"); setEmploymentType("All employment types"); };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Why Join Us */}
-      <section className="pt-24 pb-6 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7 }}
-              className="text-center mb-8"
-            >
-              <p className="text-xs tracking-[0.3em] uppercase text-accent font-medium mb-3">Careers</p>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Why Join Us?</h1>
-            </motion.div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.05 }}
-                whileHover={{ y: -4 }}
-                className="lg:col-span-3 bg-card border border-border rounded-2xl p-7"
-              >
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
-                  <Shield className="w-6 h-6 text-accent" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground mb-3">About Militros</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  At Militros, we are a team of driven pioneers working together to create meaningful impact. Our diverse professionals, brought together from different cultures and backgrounds across the country, share a common goal: to innovate and contribute to national security through cutting-edge technology.
-                </p>
+      <main>
+        <section className="relative overflow-hidden border-b border-border bg-section-alt pt-28 pb-16 md:pt-36 md:pb-24">
+          <div className="container relative mx-auto px-4">
+            <div className="mx-auto max-w-5xl">
+              <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.28em] text-accent">Careers at Militros</p>
+                <h1 className="max-w-3xl text-4xl font-bold leading-tight text-foreground md:text-6xl">Build technology that <span className="text-accent">matters.</span></h1>
+                <p className="mt-6 max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">Join a team of engineers, researchers, and builders creating meaningful advances in robotics, automation, and defence technology.</p>
+                <a href="#open-roles" className="mt-8 inline-flex items-center gap-2 rounded-md bg-accent px-5 py-3 font-semibold text-white transition hover:bg-accent/90">Explore open roles <ArrowRight className="h-4 w-4" /></a>
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.12 }}
-                whileHover={{ y: -4 }}
-                className="lg:col-span-3 bg-card border border-border rounded-2xl p-7"
-              >
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                  <Award className="w-6 h-6 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground mb-3">Our Core Values</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-                  <motion.div whileHover={{ y: -3, scale: 1.01 }} className="rounded-xl border border-border bg-background p-4 transition-all duration-300 hover:border-accent/40 hover:shadow-md">
-                    <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Flame className="w-4 h-4 text-accent" />Passion</h3>
-                    <p className="text-sm text-muted-foreground">Driven energy to solve meaningful problems with commitment and purpose.</p>
+              <div className="mt-14 grid gap-4 sm:grid-cols-3">
+                {[
+                  { icon: Lightbulb, title: "Solve hard problems", text: "Work hands-on across ambitious, real-world engineering challenges." },
+                  { icon: Users, title: "Grow together", text: "Learn from a collaborative team that values curiosity and ownership." },
+                  { icon: Cpu, title: "Make an impact", text: "Help shape technologies with purpose and lasting value." },
+                ].map(({ icon: Icon, title, text }, index) => (
+                  <motion.div key={title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 + index * 0.08 }} className="rounded-xl border border-border bg-card p-5">
+                    <Icon className="mb-4 h-5 w-5 text-accent" />
+                    <h2 className="font-semibold text-foreground">{title}</h2>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
                   </motion.div>
-                  <motion.div whileHover={{ y: -3, scale: 1.01 }} className="rounded-xl border border-border bg-background p-4 transition-all duration-300 hover:border-accent/40 hover:shadow-md">
-                    <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Handshake className="w-4 h-4 text-accent" />Integrity</h3>
-                    <p className="text-sm text-muted-foreground">Honest actions, accountability, and trust in every decision we make.</p>
-                  </motion.div>
-                  <motion.div whileHover={{ y: -3, scale: 1.01 }} className="rounded-xl border border-border bg-background p-4 transition-all duration-300 hover:border-accent/40 hover:shadow-md">
-                    <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2"><Lightbulb className="w-4 h-4 text-accent" />Innovation</h3>
-                    <p className="text-sm text-muted-foreground">Creative thinking and bold engineering to build next-generation solutions.</p>
-                  </motion.div>
-                  <motion.div whileHover={{ y: -3, scale: 1.01 }} className="rounded-xl border border-border bg-background p-4 transition-all duration-300 hover:border-accent/40 hover:shadow-md">
-                    <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2"><BadgeCheck className="w-4 h-4 text-accent" />Quality</h3>
-                    <p className="text-sm text-muted-foreground">High standards in design, execution, reliability, and performance.</p>
-                  </motion.div>
-                  <motion.div whileHover={{ y: -3, scale: 1.01 }} className="rounded-xl border border-border bg-background p-4 transition-all duration-300 hover:border-accent/40 hover:shadow-md">
-                    <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-accent" />Growth</h3>
-                    <p className="text-sm text-muted-foreground">Continuous learning, skill-building, and long-term career progression.</p>
-                  </motion.div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                whileHover={{ y: -4 }}
-                className="bg-card border border-border rounded-2xl p-7"
-              >
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-accent" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Learn and Grow</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Gain new skills and knowledge while working on projects that challenge and inspire.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.28 }}
-                whileHover={{ y: -4 }}
-                className="bg-card border border-border rounded-2xl p-7"
-              >
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                  <Cpu className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Innovate and Lead</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Contribute to cutting-edge advancements in robotics, automation, and defence technologies.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.36 }}
-                whileHover={{ y: -4 }}
-                className="bg-card border border-border rounded-2xl p-7"
-              >
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
-                  <Target className="w-6 h-6 text-accent" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">Make an Impact</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Be part of something bigger. Your work here directly or indirectly strengthens national security.
-                </p>
-              </motion.div>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.44 }}
-              className="mt-6 bg-gradient-to-r from-accent/10 to-primary/10 border border-border rounded-2xl p-6"
-            >
-              <p className="text-muted-foreground leading-relaxed">
-                We believe in providing equal opportunities to talented individuals from all backgrounds and experiences. If someone is passionate about technology, innovation, and making a difference, Militros is the place for him. Shape the future of technology with us. Join our team and embark on a career that truly matters.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Job Openings - Main Content */}
-      <section className="pt-12 pb-16 bg-background">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-12"
-          >
-            <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4">Open Positions</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Current opportunities to join our defence technology mission. Use admin login in the header to manage jobs.
-            </p>
-            {isAdmin && (
-              <div className="mt-6">
-                <button
-                  onClick={() => setShowAddJobForm(true)}
-                  className="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
-                >
-                  Add New Job Opening
-                </button>
-              </div>
-            )}
-          </motion.div>
-
-          {(!jobs || jobs.length === 0) ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-center py-16"
-            >
-              <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Briefcase className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground mb-4">No Open Positions</h3>
-              <p className="text-muted-foreground mb-6">
-                We're not currently hiring, but check back soon for exciting opportunities in defence technology.
-              </p>
-              {!isAdmin && (
-                <p className="text-sm text-muted-foreground">
-                  Admin login required to add job openings
-                </p>
-              )}
-            </motion.div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-              {jobs && jobs.map((job, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="bg-card border border-border rounded-2xl p-8 hover:shadow-lg transition-all duration-300"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-foreground mb-1">{job.title}</h3>
-                      <p className="text-accent font-medium">{job.department}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="w-4 h-4" />
-                        <span>{job.location}</span>
-                      </div>
-                      {isAdmin && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEditJob(index)}
-                            className="text-blue-500 hover:text-blue-700 transition-colors"
-                            title="Edit job"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteJob(index)}
-                            className="text-red-500 hover:text-red-700 transition-colors"
-                            title="Delete job"
-                          >
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {job.description && (
-                    <p className="text-muted-foreground mb-6">{job.description}</p>
-                  )}
-
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-foreground mb-3">Requirements:</h4>
-                    <ul className="space-y-1">
-                      {(job.requirements || []).map((req, reqIndex) => (
-                        <li key={reqIndex} className="text-sm text-muted-foreground flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 bg-accent rounded-full"></div>
-                          {req}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm font-medium">
-                      {job.type}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      {job.jdFile && (
-                        <button
-                          onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = job.jdFile.data;
-                            link.download = job.jdFile.name;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                          }}
-                          className="border border-border hover:bg-accent/5 text-foreground px-4 py-2 rounded-lg font-medium transition-colors text-sm"
-                        >
-                          Download JD
-                        </button>
-                      )}
-                      <button
-                        onClick={() => job.applyLink && window.open(job.applyLink, '_blank')}
-                        className="bg-accent hover:bg-accent/90 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                      >
-                        Apply Now
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* LinkedIn Jobs Callout */}
-      <section className="pt-0 pb-12 bg-background">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="max-w-4xl mx-auto text-center bg-card border border-border rounded-2xl p-8"
-          >
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Check Out Our Job Openings On LinkedIn
-            </h1>
-            <p className="text-muted-foreground mb-6">
-              Browse current opportunities and apply directly through our official LinkedIn jobs page.
-            </p>
-            <a
-              href={LINKEDIN_JOBS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300"
-            >
-              View LinkedIn Jobs
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </motion.div>
-        </div>
-      </section>
-
-      
-      {/* Admin Login Modal */}
-      {showAdminLogin && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card p-8 rounded-2xl border border-border max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-foreground mb-6 text-center">Admin Login</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Username</label>
-                <input
-                  type="text"
-                  value={adminUsername}
-                  onChange={(e) => setAdminUsername(e.target.value)}
-                  className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none"
-                  placeholder="Enter username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Password</label>
-                <input
-                  type="password"
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none"
-                  placeholder="Enter password"
-                />
-              </div>
-              {loginError && (
-                <p className="text-red-500 text-sm text-center">{loginError}</p>
-              )}
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={handleAdminLogin}
-                  className="flex-1 bg-accent hover:bg-accent/90 text-white py-2 rounded-lg font-medium transition-colors"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => setShowAdminLogin(false)}
-                  className="flex-1 border border-border hover:bg-accent/5 text-foreground py-2 rounded-lg font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Job Form Modal */}
-      {isAdmin && showAddJobForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card p-8 rounded-2xl border border-border max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-foreground">
-                {editingIndex !== null ? 'Edit Job Opening' : 'Add New Job Opening'}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowAddJobForm(false);
-                  setEditingIndex(null);
-                  setNewJob({
-                    title: '',
-                    department: '',
-                    location: '',
-                    type: 'Full-time',
-                    jdFile: null,
-                    requirements: [''],
-                    applyLink: ''
-                  });
-                }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Job Title</label>
-                  <input
-                    type="text"
-                    value={newJob.title}
-                    onChange={(e) => setNewJob({ ...newJob, title: e.target.value })}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none"
-                    placeholder="e.g. Senior Software Engineer"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Department</label>
-                  <input
-                    type="text"
-                    value={newJob.department}
-                    onChange={(e) => setNewJob({ ...newJob, department: e.target.value })}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none"
-                    placeholder="e.g. Engineering"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Location</label>
-                  <select
-                    value={newJob.location}
-                    onChange={(e) => setNewJob({ ...newJob, location: e.target.value })}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none"
-                  >
-                    <option value="On-site">On-site</option>
-                    <option value="Remote">Remote</option>
-                    <option value="Hybrid">Hybrid</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Type</label>
-                  <select
-                    value={newJob.type}
-                    onChange={(e) => setNewJob({ ...newJob, type: e.target.value })}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none"
-                  >
-                    <option value="Full-time">Full-time</option>
-                    <option value="Part-time">Part-time</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Internship">Internship</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                Job Description (JD) File {editingIndex === null ? '*' : '(optional - leave empty to keep current)'}
-              </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setNewJob({ ...newJob, jdFile: file });
-                      }
-                    }}
-                    className="hidden"
-                    id="jd-file-upload"
-                  />
-                  <label
-                    htmlFor="jd-file-upload"
-                    className="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none cursor-pointer hover:border-accent/40 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Plus className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      {newJob.jdFile ? newJob.jdFile.name : 'Choose JD file (PDF, DOC, DOCX)'}
-                    </span>
-                  </label>
-                  {newJob.jdFile && (
-                    <button
-                      type="button"
-                      onClick={() => setNewJob({ ...newJob, jdFile: null })}
-                      className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {editingIndex === null ? 'Upload a detailed job description file (required)' : 'Upload new JD file or leave empty to keep current file'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Apply Link</label>
-                <input
-                  type="url"
-                  value={newJob.applyLink}
-                  onChange={(e) => setNewJob({ ...newJob, applyLink: e.target.value })}
-                  className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none"
-                  placeholder="https://example.com/apply/job-title"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Requirements</label>
-                {newJob.requirements.map((req, index) => (
-                  <div key={index} className="flex gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={req}
-                      onChange={(e) => updateRequirement(index, e.target.value)}
-                      className="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:border-accent outline-none"
-                      placeholder={`Requirement ${index + 1}`}
-                    />
-                    {newJob.requirements.length > 1 && (
-                      <button
-                        onClick={() => removeRequirement(index)}
-                        className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
                 ))}
-                <button
-                  onClick={addRequirement}
-                  className="flex items-center gap-2 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Requirement
-                </button>
-              </div>
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={handleAddJob}
-                  className="flex-1 bg-accent hover:bg-accent/90 text-white py-2 rounded-lg font-medium transition-colors"
-                >
-                  {editingIndex !== null ? 'Update Job' : 'Add Job'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddJobForm(false);
-                    setEditingIndex(null);
-                    setNewJob({
-                      title: '',
-                      department: '',
-                      location: '',
-                      type: 'Full-time',
-                      jdFile: null,
-                      requirements: [''],
-                      applyLink: ''
-                    });
-                  }}
-                  className="flex-1 border border-border hover:bg-accent/5 text-foreground py-2 rounded-lg font-medium transition-colors"
-                >
-                  Cancel
-                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </section>
+
+        <section id="open-roles" className="py-16 md:py-20">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-5xl">
+              <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-accent">Find your place</p>
+                  <h2 className="text-3xl font-bold text-foreground md:text-4xl">Open positions</h2>
+                  <p className="mt-3 text-muted-foreground">Explore current opportunities and find a role that fits your skills.</p>
+                </div>
+                {!jobsLoading && !jobsError && jobs.length > 0 && <p className="text-sm text-muted-foreground">{filteredJobs.length} {filteredJobs.length === 1 ? "role" : "roles"} available</p>}
+              </div>
+
+              {!jobsLoading && !jobsError && jobs.length > 0 && (
+                <div className="mb-7 grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-2 xl:grid-cols-[1fr_210px_210px_210px]">
+                  <label className="relative block">
+                    <span className="sr-only">Search roles</span>
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search roles or keywords" className="h-11 w-full rounded-md border border-input bg-background pl-10 pr-3 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20" />
+                  </label>
+                  <label>
+                    <span className="sr-only">Filter by department</span>
+                    <select value={department} onChange={(event) => setDepartment(event.target.value)} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/20">
+                      <option>All departments</option>{departments.map((item) => <option key={item}>{item}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="sr-only">Filter by location</span>
+                    <select value={location} onChange={(event) => setLocation(event.target.value)} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/20">
+                      <option>All locations</option>{locations.map((item) => <option key={item}>{item}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="sr-only">Filter by employment type</span>
+                    <select value={employmentType} onChange={(event) => setEmploymentType(event.target.value)} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/20">
+                      <option>All employment types</option>{employmentTypes.map((item) => <option key={item}>{item}</option>)}
+                    </select>
+                  </label>
+                </div>
+              )}
+
+              {jobsLoading ? (
+                <div className="grid gap-4 md:grid-cols-2"><div className="h-48 animate-pulse rounded-xl bg-muted" /><div className="h-48 animate-pulse rounded-xl bg-muted" /></div>
+              ) : jobsError ? (
+                <div className="rounded-xl border border-border bg-card px-6 py-14 text-center"><Briefcase className="mx-auto mb-4 h-8 w-8 text-muted-foreground" /><h3 className="text-lg font-semibold text-foreground">Roles are temporarily unavailable</h3><p className="mt-2 text-sm text-muted-foreground">Please try again later or browse our LinkedIn jobs page.</p></div>
+              ) : filteredJobs.length === 0 ? (
+                <div className="rounded-xl border border-border bg-card px-6 py-14 text-center">
+                  <Briefcase className="mx-auto mb-4 h-8 w-8 text-accent" />
+                  <h3 className="text-xl font-semibold text-foreground">{jobs.length ? "No roles match your search" : "No openings available"}</h3>
+                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">{jobs.length ? "Try a different keyword or clear your filters to see all current opportunities." : "We’re always interested in meeting people who care about meaningful technology. Check back soon for new opportunities."}</p>
+                  {jobs.length > 0 ? <button onClick={resetFilters} className="mt-5 text-sm font-semibold text-accent hover:underline">Clear filters</button> : !isJobsFeedConfigured ? <p className="mt-4 text-xs text-muted-foreground">The careers feed has not been connected yet.</p> : null}
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {filteredJobs.map((job, index) => (
+                    <motion.article key={`${job.title}-${job.department}-${index}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(index * 0.05, 0.25) }} className="flex flex-col rounded-xl border border-border bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg">
+                      <div className="flex-1">
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          {job.department && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">{job.department}</span>}
+                          {job.type && <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">{job.type}</span>}
+                        </div>
+                        <h3 className="text-xl font-bold text-foreground">{job.title}</h3>
+                        {job.description && <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">{job.description}</p>}
+                        {job.experience && <p className="mt-3 text-sm text-muted-foreground"><span className="font-medium text-foreground">Experience:</span> {job.experience}</p>}
+                        <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                          {job.location && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" />{job.location}</span>}
+                        </div>
+                      </div>
+                      <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                        <button onClick={() => setSelectedJob(job)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-accent">View details <ArrowRight className="h-4 w-4" /></button>
+                        <a href={job.applyLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent/90">Apply now <ExternalLink className="h-3.5 w-3.5" /></a>
+                      </div>
+                    </motion.article>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-t border-border bg-section-alt py-12">
+          <div className="container mx-auto flex flex-col items-center justify-between gap-5 px-4 text-center md:flex-row md:text-left">
+            <div><h2 className="text-xl font-bold text-foreground">Looking for more opportunities?</h2><p className="mt-1 text-sm text-muted-foreground">See the latest openings on our LinkedIn page.</p></div>
+            <a href={LINKEDIN_JOBS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-5 py-3 text-sm font-semibold text-foreground transition hover:border-accent hover:text-accent">View LinkedIn jobs <ExternalLink className="h-4 w-4" /></a>
+          </div>
+        </section>
+      </main>
+
+      <Dialog open={Boolean(selectedJob)} onOpenChange={(open) => { if (!open) setSelectedJob(null); }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          {selectedJob && <>
+            <DialogHeader>
+              <div className="mb-2 flex flex-wrap gap-2">{selectedJob.department && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">{selectedJob.department}</span>}{selectedJob.type && <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">{selectedJob.type}</span>}</div>
+              <DialogTitle className="text-2xl">{selectedJob.title}</DialogTitle>
+              <DialogDescription className="flex flex-wrap gap-x-4 gap-y-1 pt-1">{selectedJob.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{selectedJob.location}</span>}{selectedJob.experience && <span>Experience: {selectedJob.experience}</span>}</DialogDescription>
+            </DialogHeader>
+            {selectedJob.description && <div className="mt-3"><h3 className="mb-2 font-semibold text-foreground">About the role</h3><p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">{selectedJob.description}</p></div>}
+            {selectedJob.responsibilities.length > 0 && <div><h3 className="mb-2 font-semibold text-foreground">Responsibilities</h3><ul className="space-y-2">{selectedJob.responsibilities.map((item, index) => <li key={`${index}-${item}`} className="flex gap-2 text-sm leading-6 text-muted-foreground"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />{item}</li>)}</ul></div>}
+            {selectedJob.requirements.length > 0 && <div><h3 className="mb-2 font-semibold text-foreground">What you’ll bring</h3><ul className="space-y-2">{selectedJob.requirements.map((item, index) => <li key={`${index}-${item}`} className="flex gap-2 text-sm leading-6 text-muted-foreground"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />{item}</li>)}</ul></div>}
+            {selectedJob.qualifications.length > 0 && <div><h3 className="mb-2 font-semibold text-foreground">Qualifications</h3><ul className="space-y-2">{selectedJob.qualifications.map((item, index) => <li key={`${index}-${item}`} className="flex gap-2 text-sm leading-6 text-muted-foreground"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />{item}</li>)}</ul></div>}
+            <div className="mt-3 flex flex-wrap gap-3">
+              {selectedJob.jdUrl && <a href={selectedJob.jdUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">Full job description <ExternalLink className="h-4 w-4" /></a>}
+              <a href={selectedJob.applyLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent/90">Apply for this role <ExternalLink className="h-4 w-4" /></a>
+            </div>
+          </>}
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

@@ -2,6 +2,9 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { ArrowUpRight, Zap, Target, Shield, Wrench, Brain, CircuitBoard, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import astraEImage from "../../newimages/astra new image.webp";
+import recoveryTrainingImage from "../../newimages/Recovery Training Simulator new.webp";
+import hillDrivingImage from "../../newimages/Hill Driving Training Simulator new .webp";
 
 type Product = {
   title: string;
@@ -101,13 +104,13 @@ const productCategories: { id: string; title: string; icon: typeof Wrench; image
       },
       {
         title: "Recovery Training Simulator",
-        image: "/project-images/recoverytraining-v2.png",
+        image: recoveryTrainingImage,
         description: "Advanced recovery training simulator for military vehicle operators, focusing on vehicle recovery techniques, towing operations, and emergency response procedures in various terrain conditions.",
         specs: ["Recovery Operations", "Towing Training", "Emergency Response", "Terrain Simulation", "Instructor Control", "Performance Metrics"]
       },
       {
         title: "Hill Driving Training Simulator",
-        image: "/project-images/armytrucksimulator.png",
+        image: hillDrivingImage,
         description: "Specialized simulator for hill driving training, designed to prepare military drivers for challenging mountain terrains, steep gradients, and adverse weather conditions encountered in high-altitude operations.",
         specs: ["Hill Terrain Simulation", "Gradient Training", "Weather Effects", "Altitude Simulation", "Safety Systems", "Real-time Feedback"]
       }
@@ -120,7 +123,7 @@ const productCategories: { id: string; title: string; icon: typeof Wrench; image
     products: [
       {
         title: "ASTRA-E",
-        image: "/project-images/ASTRAE.png",
+        image: astraEImage,
         description: "ASTRA-E is a lightweight, AI-powered electro-optic module equipped with picatinny rail for easy mount. It integrates real-time human detection, laser range finding, and wireless communication to assist shooters with precision targeting and commander-level situational awareness.",
         specs: ["<800g Weight", "50mm Lens Camera", "10 TOPS AI Processor", "3.2\" Display", "Laser Range Finder", "Secure Wireless"]
       },
