@@ -38,6 +38,8 @@ const Footer = () => {
         <div className="border-t border-primary-foreground/10 mt-12 pt-8 text-center">
           <p className="text-xs text-primary-foreground/40">
             © {new Date().getFullYear()} Militros — All rights reserved.
+            <span className="mx-2">·</span>
+            <Link to="/admin/login" className="hover:text-primary-foreground transition-colors">Staff login</Link>
           </p>
         </div>
       </div>

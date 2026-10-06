@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Briefcase, Cpu, ExternalLink, Lightbulb, MapPin, Search, Users } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { ArrowRight, Briefcase, Clock, Cpu, ExternalLink, Lightbulb, MapPin, Search, Share2, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getOpenJobs, isJobsFeedConfigured, Job } from "@/lib/jobs";
+import { getOpenJobs, Job, jobUrl, postedLabel } from "@/lib/jobs";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const LINKEDIN_JOBS_URL = "https://www.linkedin.com/company/virinnovations/jobs/";
@@ -16,7 +20,12 @@ const Careers = () => {
   const [department, setDepartment] = useState("All departments");
   const [location, setLocation] = useState("All locations");
   const [employmentType, setEmploymentType] = useState("All employment types");
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  // /careers/<slug> opens that job's details, so the address bar is always a shareable link.
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const selectedJob = slug ? jobs.find((job) => job.slug === slug) ?? null : null;
+  usePageTitle(selectedJob ? `${selectedJob.title} – Careers at Militros` : "Careers at Militros");
+  const jobNoLongerOpen = Boolean(slug) && !jobsLoading && !jobsError && !selectedJob;
 
   useEffect(() => {
     getOpenJobs()
@@ -33,6 +42,20 @@ const Careers = () => {
     const matchesQuery = !term || [job.title, job.department, job.location, job.type, job.experience, job.description, ...job.requirements, ...job.responsibilities, ...job.qualifications].some((value) => value.toLowerCase().includes(term));
     return matchesQuery && (department === "All departments" || job.department === department) && (location === "All locations" || job.location === location) && (employmentType === "All employment types" || job.type === employmentType);
   }), [jobs, query, department, location, employmentType]);
+
+  const shareJob = async (job: Job) => {
+    const url = jobUrl(job.slug);
+    if (navigator.share) {
+      try { await navigator.share({ title: `${job.title} – Militros`, url }); } catch { /* share sheet dismissed */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Job link copied.");
+    } catch {
+      toast.error("Could not copy the link.");
+    }
+  };
 
   const resetFilters = () => { setQuery(""); setDepartment("All departments"); setLocation("All locations"); setEmploymentType("All employment types"); };
 
@@ -80,6 +103,12 @@ const Careers = () => {
                 {!jobsLoading && !jobsError && jobs.length > 0 && <p className="text-sm text-muted-foreground">{filteredJobs.length} {filteredJobs.length === 1 ? "role" : "roles"} available</p>}
               </div>
 
+              {jobNoLongerOpen && (
+                <div role="status" className="mb-7 rounded-xl border border-accent/40 bg-accent/5 px-5 py-4 text-sm text-foreground">
+                  This position is no longer open. Take a look at our other openings below.
+                </div>
+              )}
+
               {!jobsLoading && !jobsError && jobs.length > 0 && (
                 <div className="mb-7 grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-2 xl:grid-cols-[1fr_210px_210px_210px]">
                   <label className="relative block">
@@ -117,12 +146,12 @@ const Careers = () => {
                   <Briefcase className="mx-auto mb-4 h-8 w-8 text-accent" />
                   <h3 className="text-xl font-semibold text-foreground">{jobs.length ? "No roles match your search" : "No openings available"}</h3>
                   <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">{jobs.length ? "Try a different keyword or clear your filters to see all current opportunities." : "We’re always interested in meeting people who care about meaningful technology. Check back soon for new opportunities."}</p>
-                  {jobs.length > 0 ? <button onClick={resetFilters} className="mt-5 text-sm font-semibold text-accent hover:underline">Clear filters</button> : !isJobsFeedConfigured ? <p className="mt-4 text-xs text-muted-foreground">The careers feed has not been connected yet.</p> : null}
+                  {jobs.length > 0 ? <button onClick={resetFilters} className="mt-5 text-sm font-semibold text-accent hover:underline">Clear filters</button> : !isSupabaseConfigured ? <p className="mt-4 text-xs text-muted-foreground">The careers feed has not been connected yet.</p> : null}
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   {filteredJobs.map((job, index) => (
-                    <motion.article key={`${job.title}-${job.department}-${index}`} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(index * 0.05, 0.25) }} className="flex flex-col rounded-xl border border-border bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg">
+                    <motion.article key={job.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(index * 0.05, 0.25) }} className="flex flex-col rounded-xl border border-border bg-card p-6 transition hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg">
                       <div className="flex-1">
                         <div className="mb-4 flex flex-wrap gap-2">
                           {job.department && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">{job.department}</span>}
@@ -133,10 +162,11 @@ const Careers = () => {
                         {job.experience && <p className="mt-3 text-sm text-muted-foreground"><span className="font-medium text-foreground">Experience:</span> {job.experience}</p>}
                         <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
                           {job.location && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4" />{job.location}</span>}
+                          {job.publishedAt && <span className="inline-flex items-center gap-1.5"><Clock className="h-4 w-4" />{postedLabel(job.publishedAt)}</span>}
                         </div>
                       </div>
                       <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-                        <button onClick={() => setSelectedJob(job)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-accent">View details <ArrowRight className="h-4 w-4" /></button>
+                        <button onClick={() => navigate(`/careers/${job.slug}`)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-accent">View details <ArrowRight className="h-4 w-4" /></button>
                         <a href={job.applyLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent/90">Apply now <ExternalLink className="h-3.5 w-3.5" /></a>
                       </div>
                     </motion.article>
@@ -155,13 +185,13 @@ const Careers = () => {
         </section>
       </main>
 
-      <Dialog open={Boolean(selectedJob)} onOpenChange={(open) => { if (!open) setSelectedJob(null); }}>
+      <Dialog open={Boolean(selectedJob)} onOpenChange={(open) => { if (!open) navigate("/careers", { replace: true }); }}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           {selectedJob && <>
             <DialogHeader>
               <div className="mb-2 flex flex-wrap gap-2">{selectedJob.department && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">{selectedJob.department}</span>}{selectedJob.type && <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">{selectedJob.type}</span>}</div>
               <DialogTitle className="text-2xl">{selectedJob.title}</DialogTitle>
-              <DialogDescription className="flex flex-wrap gap-x-4 gap-y-1 pt-1">{selectedJob.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{selectedJob.location}</span>}{selectedJob.experience && <span>Experience: {selectedJob.experience}</span>}</DialogDescription>
+              <DialogDescription className="flex flex-wrap gap-x-4 gap-y-1 pt-1">{selectedJob.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" />{selectedJob.location}</span>}{selectedJob.experience && <span>Experience: {selectedJob.experience}</span>}{selectedJob.publishedAt && <span className="inline-flex items-center gap-1"><Clock className="h-4 w-4" />{postedLabel(selectedJob.publishedAt)}</span>}</DialogDescription>
             </DialogHeader>
             {selectedJob.description && <div className="mt-3"><h3 className="mb-2 font-semibold text-foreground">About the role</h3><p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">{selectedJob.description}</p></div>}
             {selectedJob.responsibilities.length > 0 && <div><h3 className="mb-2 font-semibold text-foreground">Responsibilities</h3><ul className="space-y-2">{selectedJob.responsibilities.map((item, index) => <li key={`${index}-${item}`} className="flex gap-2 text-sm leading-6 text-muted-foreground"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />{item}</li>)}</ul></div>}
@@ -170,6 +200,7 @@ const Careers = () => {
             <div className="mt-3 flex flex-wrap gap-3">
               {selectedJob.jdUrl && <a href={selectedJob.jdUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">Full job description <ExternalLink className="h-4 w-4" /></a>}
               <a href={selectedJob.applyLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-white hover:bg-accent/90">Apply for this role <ExternalLink className="h-4 w-4" /></a>
+              <button onClick={() => shareJob(selectedJob)} className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">Share <Share2 className="h-4 w-4" /></button>
             </div>
           </>}
         </DialogContent>

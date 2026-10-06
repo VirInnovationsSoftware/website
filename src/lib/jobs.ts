@@ -1,4 +1,30 @@
+import { differenceInCalendarDays, formatDistanceToNowStrict } from "date-fns";
+
+export type JobStatus = "draft" | "published" | "closed";
+
+// A row of public.jobs. List fields are stored as text, one item per line.
+export type JobRow = {
+  id: string;
+  slug: string;
+  title: string;
+  department: string | null;
+  location: string | null;
+  employment_type: string | null;
+  description: string | null;
+  requirements: string | null;
+  responsibilities: string | null;
+  qualifications: string | null;
+  experience: string | null;
+  jd_url: string | null;
+  google_form_url: string | null;
+  status: JobStatus;
+  created_at: string;
+  published_at: string | null;
+};
+
 export type Job = {
+  id: string;
+  slug: string;
   title: string;
   department: string;
   location: string;
@@ -10,59 +36,66 @@ export type Job = {
   experience: string;
   jdUrl: string;
   applyLink: string;
+  publishedAt: string | null;
 };
 
-const jobsApiUrl = import.meta.env.VITE_JOBS_API_URL?.trim();
+export const GOOGLE_FORM_URL_PATTERN = /^https:\/\/(docs\.google\.com\/forms\/|forms\.gle\/)/;
+export const GOOGLE_SHEET_URL_PATTERN = /^https:\/\/docs\.google\.com\/spreadsheets\//;
+export const HTTPS_URL_PATTERN = /^https:\/\//;
 
-function loadJobsJsonp(url: string): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const callbackName = `__jobsFeed_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const callbackWindow = window as unknown as Record<string, (data: unknown) => void>;
-    const script = document.createElement("script");
-    const endpoint = new URL(url);
-    endpoint.searchParams.set("callback", callbackName);
+const PUBLIC_JOB_COLUMNS =
+  "id, slug, title, department, location, employment_type, description, requirements, responsibilities, qualifications, experience, jd_url, google_form_url, published_at";
 
-    const cleanup = () => {
-      delete callbackWindow[callbackName];
-      script.remove();
-      window.clearTimeout(timeout);
-    };
-    const timeout = window.setTimeout(() => {
-      cleanup();
-      reject(new Error("The jobs feed took too long to respond."));
-    }, 15000);
+// Full shareable address of a job, e.g. https://example.com/careers/embedded-intern-3f2a9c
+export const jobUrl = (slug: string) => `${window.location.origin}/careers/${slug}`;
 
-    callbackWindow[callbackName] = (data) => { cleanup(); resolve(data); };
-    script.onerror = () => { cleanup(); reject(new Error("Could not load open positions.")); };
-    script.src = endpoint.toString();
-    document.head.appendChild(script);
-  });
+// "Posted today", "Posted yesterday", "Posted 5 days ago", "Posted 2 months ago".
+export function postedLabel(publishedAt: string | null) {
+  if (!publishedAt) return "";
+  const date = new Date(publishedAt);
+  const days = differenceInCalendarDays(new Date(), date);
+  if (days <= 0) return "Posted today";
+  if (days === 1) return "Posted yesterday";
+  return `Posted ${formatDistanceToNowStrict(date, { unit: days < 30 ? "day" : undefined, roundingMethod: "floor" })} ago`;
 }
 
+export const splitLines = (value: string | null) =>
+  (value ?? "").split("\n").map((line) => line.trim()).filter(Boolean);
+
+function toJob(row: Omit<JobRow, "status" | "created_at">): Job {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    department: row.department ?? "",
+    location: row.location ?? "",
+    type: row.employment_type ?? "",
+    description: row.description ?? "",
+    requirements: splitLines(row.requirements),
+    responsibilities: splitLines(row.responsibilities),
+    qualifications: splitLines(row.qualifications),
+    experience: row.experience ?? "",
+    jdUrl: row.jd_url && HTTPS_URL_PATTERN.test(row.jd_url) ? row.jd_url : "",
+    applyLink: row.google_form_url ?? "",
+    publishedAt: row.published_at,
+  };
+}
+
+// Published jobs, newest first. Jobs without a valid Google Form link are hidden
+// so visitors never see an "Apply" button that goes nowhere.
 export async function getOpenJobs(): Promise<Job[]> {
-  if (!jobsApiUrl) return [];
+  // Imported on demand so the Supabase library isn't part of the homepage's first download.
+  const { supabase } = await import("@/lib/supabase");
+  if (!supabase) return [];
 
-  const payload = await loadJobsJsonp(jobsApiUrl);
-  if (!Array.isArray(payload)) throw new Error("The jobs feed returned invalid data.");
+  const { data, error } = await supabase
+    .from("jobs")
+    .select(PUBLIC_JOB_COLUMNS)
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+  if (error) throw error;
 
-  return payload.filter((job): job is Job =>
-    Boolean(job && typeof job === "object" &&
-      typeof job.title === "string" &&
-      typeof job.applyLink === "string" &&
-      /^https:\/\/(docs\.google\.com\/forms\/|forms\.gle\/)/.test(job.applyLink))
-  ).map((job) => ({
-    title: job.title,
-    department: job.department || "",
-    location: job.location || "",
-    type: job.type || "",
-    description: job.description || "",
-    requirements: Array.isArray(job.requirements) ? job.requirements : [],
-    responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities : [],
-    qualifications: Array.isArray(job.qualifications) ? job.qualifications : [],
-    experience: typeof job.experience === "string" ? job.experience : "",
-    jdUrl: job.jdUrl || "",
-    applyLink: job.applyLink,
-  }));
+  return data
+    .filter((row) => row.google_form_url && GOOGLE_FORM_URL_PATTERN.test(row.google_form_url))
+    .map(toJob);
 }
-
-export const isJobsFeedConfigured = Boolean(jobsApiUrl);

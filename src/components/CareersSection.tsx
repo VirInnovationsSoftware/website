@@ -2,80 +2,21 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getOpenJobs, Job, postedLabel } from "@/lib/jobs";
 
 const CareersSection = () => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Load jobs from localStorage
-    const storedJobs = localStorage.getItem('jobs');
-    if (storedJobs) {
-      const parsedJobs = JSON.parse(storedJobs);
-      // Ensure jobs have required properties and apply links
-      const jobsWithApplyLinks = parsedJobs.map((job: any) => ({
-        ...job,
-        applyLink: job.applyLink || `https://militros.com/careers/${job.title.toLowerCase().replace(/\s+/g, '-')}`
-      }));
-      setJobs(jobsWithApplyLinks);
-    } else {
-      // Default jobs (recently added ones first)
-      const defaultJobs = [
-        { 
-          title: "Senior AI Engineer", 
-          department: "Autonomous Systems", 
-          location: "Hybrid",
-          type: "Full-time",
-          applyLink: "https://militros.com/careers/senior-ai-engineer"
-        },
-        { 
-          title: "Hardware Integration Lead", 
-          department: "Product Engineering", 
-          location: "On-site",
-          type: "Full-time",
-          applyLink: "https://militros.com/careers/hardware-integration-lead"
-        },
-        { 
-          title: "Embedded Systems Developer", 
-          department: "IoT & Electronics", 
-          location: "Hybrid",
-          type: "Full-time",
-          applyLink: "https://militros.com/careers/embedded-systems-developer"
-        },
-        { 
-          title: "Defence Systems Architect", 
-          department: "Defence Programs", 
-          location: "On-site",
-          type: "Full-time",
-          applyLink: "https://militros.com/careers/defence-systems-architect"
-        },
-        { 
-          title: "Mechanical Design Engineer", 
-          department: "Robotics", 
-          location: "On-site",
-          type: "Full-time",
-          applyLink: "https://militros.com/careers/mechanical-design-engineer"
-        },
-        { 
-          title: "Software Engineering Intern", 
-          department: "CSE", 
-          location: "Hybrid",
-          type: "Internship",
-          applyLink: "https://militros.com/careers/software-engineering-intern"
-        },
-        { 
-          title: "Mechanical Engineering Intern", 
-          department: "Mechanical", 
-          location: "Hybrid",
-          type: "Internship",
-          applyLink: "https://militros.com/careers/mechanical-engineering-intern"
-        },
-      ];
-      setJobs(defaultJobs);
-      localStorage.setItem('jobs', JSON.stringify(defaultJobs));
-    }
+    getOpenJobs()
+      .then(setJobs)
+      .catch((error) => console.error("Unable to load jobs:", error))
+      .finally(() => setJobsLoading(false));
   }, []);
 
   return (
@@ -130,19 +71,24 @@ const CareersSection = () => {
               Open Positions
             </h3>
             <div className="space-y-3">
+              {!jobsLoading && jobs.length === 0 && (
+                <p className="bg-card border border-border p-4 text-sm text-muted-foreground">
+                  No openings available right now. Check back soon.
+                </p>
+              )}
               {jobs.slice(0, 5).map((job, i) => (
                 <motion.div
-                  key={`${job.title}-${i}`}
+                  key={job.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={inView ? { opacity: 1, x: 0 } : {}}
                   transition={{ duration: 0.4, delay: 0.3 + i * 0.08 }}
                   whileHover={{ x: 4 }}
-                  onClick={() => job.applyLink && window.open(job.applyLink, '_blank')}
+                  onClick={() => navigate(`/careers/${job.slug}`)}
                   className="flex items-center justify-between bg-card border border-border p-4 hover:border-accent/40 transition-colors cursor-pointer group"
                 >
                   <div>
                     <h4 className="text-sm font-medium text-foreground">{job.title}</h4>
-                    <p className="text-xs text-muted-foreground">{job.department || job.team} · {job.location}</p>
+                    <p className="text-xs text-muted-foreground">{[job.department, job.location, postedLabel(job.publishedAt)].filter(Boolean).join(" · ")}</p>
                   </div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors" />
                 </motion.div>
