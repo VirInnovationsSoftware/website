@@ -1,7 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { ArrowUpRight, Zap, Target, Shield, Wrench, Brain, CircuitBoard, Lock } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Target, Shield, Wrench, Brain, CircuitBoard, Lock, X, Maximize2 } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import astraEImage from "../../newimages/astra new image.webp";
 import recoveryTrainingImage from "../../newimages/Recovery Training Simulator new.webp";
 import hillDrivingImage from "../../newimages/Hill Driving Training Simulator new .webp";
@@ -154,9 +154,10 @@ const ProjectsSection = () => {
   const inView = useInView(ref, { once: true, margin: "-100px" });
   const [selectedCategory, setSelectedCategory] = useState("robotics");
   const [hoveredProduct, setHoveredProduct] = useState<number | null>(null);
-  const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const selectedCategoryData = productCategories.find(cat => cat.id === selectedCategory);
+  const previewProduct = previewIndex !== null ? selectedCategoryData?.products[previewIndex] ?? null : null;
 
   return (
     <section id="projects" className="py-24 bg-section-alt relative overflow-hidden">
@@ -244,9 +245,12 @@ const ProjectsSection = () => {
                   {/* Product Image */}
                   {product.image && (
                     <div
-                      className={`h-[243px] overflow-hidden rounded-t-2xl cursor-zoom-in ${product.fit === "contain" ? "bg-muted/40" : ""}`}
-                      onClick={() => setPreviewImage({ src: product.image, title: product.title })}
+                      className={`relative h-[243px] overflow-hidden rounded-t-2xl cursor-zoom-in ${product.fit === "contain" ? "bg-muted/40" : ""}`}
+                      onClick={() => setPreviewIndex(i)}
                     >
+                      <div className="absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-black/50 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Maximize2 className="w-4 h-4" />
+                      </div>
                       <img
                         src={product.image}
                         alt={product.title}
@@ -328,19 +332,55 @@ const ProjectsSection = () => {
         </motion.div>
       </div>
 
-      {/* Full Image Preview (30% larger than the card image) */}
-      <Dialog open={previewImage !== null} onOpenChange={(open) => !open && setPreviewImage(null)}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-[586px] p-3 gap-3">
-          <DialogTitle className="pr-8 text-base">{previewImage?.title}</DialogTitle>
-          {previewImage && (
-            <img
-              src={previewImage.src}
-              alt={previewImage.title}
-              className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Image Lightbox (about half the screen) */}
+      <DialogPrimitive.Root open={previewProduct !== null} onOpenChange={(open) => !open && setPreviewIndex(null)}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-foreground/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogPrimitive.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] md:w-[50vw] max-w-3xl focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-300">
+            <div className="overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-black/5">
+              {/* Image stage */}
+              <div className="relative flex items-center justify-center bg-gradient-to-b from-background to-muted/40 px-6 pt-10 pb-6 md:px-10">
+                {previewProduct && (
+                  <img
+                    src={previewProduct.image}
+                    alt={previewProduct.title}
+                    className="w-full h-auto max-h-[50vh] object-contain drop-shadow-xl select-none"
+                    draggable={false}
+                  />
+                )}
+                <DialogPrimitive.Close className="absolute top-3 right-3 flex items-center justify-center w-9 h-9 rounded-md bg-card/90 text-foreground shadow-md ring-1 ring-border hover:bg-accent hover:text-accent-foreground hover:ring-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                  <X className="w-4 h-4" />
+                  <span className="sr-only">Close</span>
+                </DialogPrimitive.Close>
+              </div>
+
+              {/* Caption */}
+              <div className="flex items-center gap-4 border-t border-border px-6 py-4 md:px-8">
+                <div className="w-1 self-stretch rounded-full bg-accent" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] tracking-[0.3em] uppercase text-accent font-medium mb-1">
+                    {selectedCategoryData?.title}
+                  </p>
+                  <DialogPrimitive.Title className="text-base md:text-lg font-serif font-bold text-foreground leading-snug">
+                    {previewProduct?.title}
+                  </DialogPrimitive.Title>
+                  <DialogPrimitive.Description className="sr-only">
+                    Enlarged product image
+                  </DialogPrimitive.Description>
+                </div>
+                <div className="hidden sm:flex flex-col items-end gap-1.5 flex-shrink-0 text-xs">
+                  <span className="flex items-center gap-1 text-accent">
+                    <Target className="w-3 h-3" /> Defence Ready
+                  </span>
+                  <span className="flex items-center gap-1 text-primary">
+                    <Shield className="w-3 h-3" /> Military Grade
+                  </span>
+                </div>
+              </div>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </section>
   );
 };
