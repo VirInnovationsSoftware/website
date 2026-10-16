@@ -1,13 +1,31 @@
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { FlaskConical, CheckCircle, Wrench, Radio } from "lucide-react";
+import { FlaskConical, CheckCircle, Wrench, Sprout } from "lucide-react";
 
-const capabilities = [
+type Capability = {
+  icon: typeof Wrench;
+  image?: string;
+  title: string;
+  description: string;
+  points?: string[];
+};
+
+const capabilities: Capability[] = [
   {
     icon: Wrench,
     image: "/dti-images/MU-UGV 5.png",
-    title: "Robotics – UGV",
-    points: ["Multi Utility Unmanned Ground Vehicle (MU-UGV)", "Tactical Combat Robot", "Ground Control Station", "Smart Target System", "Stair Climbing Robot"],
+    title: "Defence Robotics – UGV",
+    description: "Rugged unmanned ground vehicles that take soldiers out of harm's way in payload delivery, surveillance, ordnance disposal and combat support.",
+  },
+  {
+    icon: Sprout,
+    title: "Agri Robotics",
+    description: "Bringing our field-proven robotics to agriculture with autonomous platforms for crop monitoring, precision spraying and farm automation that cut manual effort and improve yield.",
+  },
+  {
+    icon: FlaskConical,
+    title: "Research Robotics",
+    description: "Applied research in autonomy, perception, AI and robotic mobility, building testbeds and prototypes in collaboration with academia and industry to shape our next generation of systems.",
   },
 ];
 
@@ -40,41 +58,44 @@ const CapabilitiesSection = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {capabilities.map((cap) => (
             <div
               key={cap.title}
-              className="border-t-2 px-4 pt-8 pb-8 md:px-8 group cursor-pointer transition-all duration-300 border-accent/30 hover:border-accent hover:shadow-2xl hover:shadow-accent/20 md:grid md:grid-cols-2 md:gap-10 md:items-center"
+              className="border-t-2 px-4 pt-8 pb-8 group cursor-pointer transition-all duration-300 border-accent/30 hover:border-accent hover:shadow-2xl hover:shadow-accent/20"
             >
-              {cap.image ? (
-                <div className="mb-6 md:mb-0 h-[200px] md:h-[300px] overflow-hidden rounded-lg">
+              <div className="mb-5 h-[180px] overflow-hidden rounded-lg">
+                {cap.image ? (
                   <img
                     src={cap.image}
                     alt={cap.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                </div>
-              ) : (
-                <div className="mb-4">
-                  <cap.icon className="h-7 w-7 text-accent group-hover:text-primary transition-colors" strokeWidth={1.5} />
-                </div>
-              )}
-              <div>
-                <h3 className="text-xl md:text-2xl font-serif font-bold text-foreground mb-5 group-hover:text-primary transition-colors">
-                  {cap.title}
-                </h3>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-accent/10 via-muted/40 to-primary/15">
+                    <cap.icon className="h-14 w-14 text-accent group-hover:text-primary transition-colors" strokeWidth={1.25} />
+                  </div>
+                )}
+              </div>
+              <h3 className="text-lg font-serif font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
+                {cap.title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                {cap.description}
+              </p>
+              {cap.points && (
                 <ul className="space-y-3">
                   {cap.points.map((point) => (
                     <li
                       key={point}
-                      className="flex items-start gap-2 text-sm md:text-base text-muted-foreground hover:text-foreground transition-colors"
+                      className="flex items-start gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <CheckCircle className="h-4 w-4 text-primary mt-1 shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                       <span>{point}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
+              )}
             </div>
           ))}
         </div>
