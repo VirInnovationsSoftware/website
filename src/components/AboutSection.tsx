@@ -125,8 +125,14 @@ const AboutSection = () => {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="prose prose-lg max-w-none mb-16"
           >
-            <p className="text-gray-700 leading-relaxed text-lg">
+            <p className="text-gray-700 leading-relaxed text-lg mb-5">
               Founded in 2025 and headquartered in Hyderabad, Militros is a performance-driven product design and development company. We are a team of young pioneers committed to solving complex problems at the intersection of defence and everyday life.
+            </p>
+            <p className="text-gray-700 leading-relaxed text-lg mb-5">
+              Our core strength is unmanned ground robotics. Our UGV portfolio spans the Multi Utility Unmanned Ground Vehicle (MU-UGV), Tactical Combat Robot, Ground Control Station, Smart Target System and Stair Climbing Robot, built for payload delivery, surveillance, ordnance disposal, casualty evacuation and firing-range training. We hold Joint Development Partner status with the Indian Army, and our systems are certified for deployment with Indian Army forces.
+            </p>
+            <p className="text-gray-700 leading-relaxed text-lg">
+              We take every product from concept to field-ready system in-house, covering mechanical design, electronics and hardware integration, embedded software and AI. Beyond defence, we apply the same engineering to agri technology and applied research.
             </p>
           </motion.div>
         </motion.div>

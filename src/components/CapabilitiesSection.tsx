@@ -1,6 +1,6 @@
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { Lock, Brain, FlaskConical, CheckCircle, Wrench, CircuitBoard, Radio } from "lucide-react";
+import { FlaskConical, CheckCircle, Wrench, Radio } from "lucide-react";
 
 const capabilities = [
   {
@@ -8,24 +8,6 @@ const capabilities = [
     image: "/dti-images/MU-UGV 5.png",
     title: "Robotics – UGV",
     points: ["Multi Utility Unmanned Ground Vehicle (MU-UGV)", "Tactical Combat Robot", "Ground Control Station", "Smart Target System", "Stair Climbing Robot"],
-  },
-  {
-    icon: Lock,
-    image: "/dti-images/fcs.png",
-    title: "Fire Control Systems",
-    points: ["ASTRA-E", "AI Based automated Target tracking NSVT for TK-90", "Remote Controlled Weapon System – LMG/MMG", "Ten AI Weapon System (TAIWS)"],
-  },
-  {
-    icon: Brain,
-    image: "/dti-images/Simulator.png",
-    title: "Simulators",
-    points: ["Simple Driving Simulator / Universal Driving Simulator", "VR Based Training Simulator", "Recovery Training Simulator", "Hill Driving Training Simulator"],
-  },
-  {
-    icon: CircuitBoard,
-    image: "/dti-images/IoT.png",
-    title: "Internet of Things",
-    points: ["Integrated Fire Detection and suppression System", "EO-IR System", "Roads that Honk", "81mm Mortar Telemetry Bomb"],
   },
 ];
 
@@ -58,14 +40,14 @@ const CapabilitiesSection = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
-          {capabilities.map((cap, i) => (
+        <div className="grid grid-cols-1 gap-6 max-w-5xl mx-auto">
+          {capabilities.map((cap) => (
             <div
               key={cap.title}
-              className="border-t-2 px-4 pt-8 pb-8 group cursor-pointer transition-all duration-300 border-accent/30 hover:border-accent hover:shadow-2xl hover:shadow-accent/20"
+              className="border-t-2 px-4 pt-8 pb-8 md:px-8 group cursor-pointer transition-all duration-300 border-accent/30 hover:border-accent hover:shadow-2xl hover:shadow-accent/20 md:grid md:grid-cols-2 md:gap-10 md:items-center"
             >
               {cap.image ? (
-                <div className="mb-4 h-[162px] overflow-hidden rounded-lg">
+                <div className="mb-6 md:mb-0 h-[200px] md:h-[300px] overflow-hidden rounded-lg">
                   <img
                     src={cap.image}
                     alt={cap.title}
@@ -77,20 +59,22 @@ const CapabilitiesSection = () => {
                   <cap.icon className="h-7 w-7 text-accent group-hover:text-primary transition-colors" strokeWidth={1.5} />
                 </div>
               )}
-              <h3 className="text-lg font-serif font-bold text-foreground mb-4 group-hover:text-primary transition-colors">
-                {cap.title}
-              </h3>
-              <ul className="space-y-3">
-                {cap.points.map((point, j) => (
-                  <li
-                    key={point}
-                    className="flex items-start gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
+              <div>
+                <h3 className="text-xl md:text-2xl font-serif font-bold text-foreground mb-5 group-hover:text-primary transition-colors">
+                  {cap.title}
+                </h3>
+                <ul className="space-y-3">
+                  {cap.points.map((point) => (
+                    <li
+                      key={point}
+                      className="flex items-start gap-2 text-sm md:text-base text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <CheckCircle className="h-4 w-4 text-primary mt-1 shrink-0" />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           ))}
         </div>

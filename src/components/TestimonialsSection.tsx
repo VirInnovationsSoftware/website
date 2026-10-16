@@ -1,6 +1,4 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
-import { Quote, Star, Target, Users, Truck } from "lucide-react";
+import { Quote, Star, Target, Truck } from "lucide-react";
 
 interface Testimonial {
   name: string;
@@ -36,19 +34,11 @@ const stats = [
 ];
 
 const TestimonialsSection = () => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-100px" });
-
   return (
-    <section ref={ref} className="py-24 bg-gradient-to-br from-background via-accent/5 to-primary/5">
+    <section className="py-24 bg-gradient-to-br from-background via-accent/5 to-primary/5">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-6">
             Trusted by
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-accent to-primary">
@@ -58,142 +48,50 @@ const TestimonialsSection = () => {
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             See what military organizations and defence partners say about our technology solutions and mission-critical systems.
           </p>
-        </motion.div>
+        </div>
 
         {/* Stats Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-6 mb-16 max-w-4xl mx-auto"
-        >
+        <div className="flex flex-wrap justify-center gap-6 mb-16 max-w-4xl mx-auto">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, scale: 0.3, rotateY: -180 }}
-                animate={inView ? { 
-                  opacity: 1, 
-                  scale: 1, 
-                  rotateY: 0,
-                  transition: { 
-                    duration: 0.8, 
-                    delay: 0.3 + index * 0.15,
-                    type: "spring",
-                    stiffness: 100,
-                    damping: 15
-                  }
-                } : {}}
-                whileHover={{ 
-                  scale: 1.1,
-                  rotateY: 10,
-                  y: -10,
-                  transition: { type: "spring", stiffness: 400 }
-                }}
-                whileTap={{ scale: 0.95 }}
-                className="relative text-center p-6 md:p-8 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50 hover:border-accent/30 hover:shadow-2xl hover:shadow-accent/20 transition-all duration-300 min-w-[240px] md:min-w-[280px] max-w-[320px]"
+                className="relative text-center p-6 md:p-8 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50 min-w-[240px] md:min-w-[280px] max-w-[320px]"
               >
-                {/* Animated Icon Container */}
-                <motion.div 
-                  className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-accent/20"
-                  whileHover={{ 
-                    scale: 1.1,
-                    rotate: 360,
-                    transition: { duration: 0.6, ease: "easeInOut" }
-                  }}
-                >
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.2, 1],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      delay: index * 0.3,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <Icon className="w-8 h-8 text-white" />
-                  </motion.div>
-                </motion.div>
+                {/* Icon */}
+                <div className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-accent/20">
+                  <Icon className="w-8 h-8 text-white" />
+                </div>
 
-                {/* Animated Value */}
-                <motion.div 
-                  className="text-4xl font-bold text-foreground mb-3 bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent"
-                  initial={{ scale: 0 }}
-                  animate={inView ? { 
-                    scale: [0, 1.2, 1],
-                    transition: { 
-                      duration: 0.6, 
-                      delay: 0.8 + index * 0.15,
-                      type: "spring",
-                      stiffness: 200
-                    }
-                  } : {}}
-                  whileHover={{ scale: 1.05 }}
-                >
+                {/* Value */}
+                <div className="text-4xl font-bold text-foreground mb-3 bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
                   {stat.value}
-                </motion.div>
+                </div>
 
-                {/* Label with Hover Effect */}
-                <motion.div 
-                  className="text-sm font-semibold text-accent mb-2 uppercase tracking-wider"
-                  whileHover={{ scale: 1.05, x: 2 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
+                {/* Label */}
+                <div className="text-sm font-semibold text-accent mb-2 uppercase tracking-wider">
                   {stat.label}
-                </motion.div>
+                </div>
 
                 {/* Description */}
-                <motion.div 
-                  className="text-xs text-muted-foreground leading-relaxed"
-                  initial={{ opacity: 0 }}
-                  animate={inView ? { 
-                    opacity: 1,
-                    transition: { 
-                      duration: 0.5, 
-                      delay: 1.0 + index * 0.15
-                    }
-                  } : {}}
-                >
+                <div className="text-xs text-muted-foreground leading-relaxed">
                   {stat.description}
-                </motion.div>
+                </div>
 
                 {/* Decorative Bottom Line */}
-                <motion.div 
-                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-gradient-to-r from-accent to-primary"
-                  whileHover={{ 
-                    width: "80%",
-                    transition: { duration: 0.3 }
-                  }}
-                  style={{ width: inView ? "60%" : "0%" }}
-                  animate={{ 
-                    width: ["0%", "60%", "60%"],
-                    transition: { 
-                      duration: 0.8, 
-                      delay: 1.2 + index * 0.15,
-                      ease: "easeOut"
-                    }
-                  }}
-                />
-              </motion.div>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-0.5 bg-gradient-to-r from-accent to-primary" />
+              </div>
             );
           })}
-        </motion.div>
+        </div>
 
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.8, delay: 0.4 + index * 0.1 }}
-              className="relative group"
-            >
-              {/* Card Background with Glow */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-accent to-primary rounded-3xl blur opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+            <div key={index} className="relative">
+              {/* Card Background Glow */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-accent to-primary rounded-3xl blur opacity-10"></div>
 
               <div className="relative bg-card border border-border rounded-3xl p-8">
                 {/* Quote Icon */}
@@ -237,7 +135,7 @@ const TestimonialsSection = () => {
                   ))}
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

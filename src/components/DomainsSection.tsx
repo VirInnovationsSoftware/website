@@ -1,6 +1,6 @@
 import { motion, useInView, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState } from "react";
-import { Shield, Cpu, Settings, Zap } from "lucide-react";
+import { Shield, Cpu, Settings, Zap, Sprout, FlaskConical } from "lucide-react";
 
 const domains = [
   {
@@ -22,6 +22,16 @@ const domains = [
     icon: Zap,
     title: "Product Development",
     description: "From concept to market — electric vehicles, healthcare tech, robotics, and industrial automation solutions.",
+  },
+  {
+    icon: Sprout,
+    title: "Agri Technology",
+    description: "Smart farming solutions with field robotics, sensor-based crop monitoring, and automation that improve yield and reduce manual effort.",
+  },
+  {
+    icon: FlaskConical,
+    title: "Research & Innovation",
+    description: "Applied R&D in robotics, AI, and embedded systems, turning new ideas into tested prototypes in collaboration with academia and industry.",
   },
 ];
 
@@ -92,7 +102,7 @@ const DomainsSection = () => {
           </motion.h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 px-4 lg:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 px-4 lg:px-8">
           <AnimatePresence>
             {domains.map((domain, i) => (
               <motion.div

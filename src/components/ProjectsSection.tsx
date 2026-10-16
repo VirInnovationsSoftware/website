@@ -1,10 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Target, Shield, Wrench, Brain, CircuitBoard, Lock, X, Maximize2 } from "lucide-react";
+import { Target, Shield, Wrench, X, Maximize2 } from "lucide-react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import astraEImage from "../../newimages/astra new image.webp";
-import recoveryTrainingImage from "../../newimages/Recovery Training Simulator new.webp";
-import hillDrivingImage from "../../newimages/Hill Driving Training Simulator new .webp";
 
 type Product = {
   title: string;
@@ -52,100 +49,6 @@ const productCategories: { id: string; title: string; icon: typeof Wrench; image
         specs: ["Dimensions: 250 × 400 × 250 mm; 18 kg", "Advanced stair-climbing mechanism", "360° camera with pistol mount", "Day/night operation with live video", "Secure wireless communication", "Intuitive handheld controller"]
       }
     ]
-  },
-  {
-    id: "iot",
-    title: "Internet of Things",
-    icon: CircuitBoard,
-    image: "/dti-images/internetofthings.png",
-    products: [
-            {
-        title: "Integrated Fire Detection and suppression System",
-        image: "/project-images/Slide 15 - IFDSS.png",
-        description: "The primary objective of IFDSS is to provide a rapid, reliable, and automated fire detection and suppression solution for armored and military vehicles, ensuring the safety of personnel and protection of critical systems during combat or operational scenarios.",
-        specs: ["IR Flame Sensors", "Thermal Detection", "Automated Suppression", "Audio-Visual Alerts", "Up to 8 Sensors", "IP65 Protection"]
-      },
-      {
-        title: "EO-IR System",
-        image: "/project-images/Slide 18 - EOIR.png",
-        description: "A compact EOIR payload combining HD day optical zoom camera, thermal imaging, and laser range finding for day/night surveillance and AI-based target tracking. Designed for turret, UGV, RCWS and perimeter security integration.",
-        specs: ["1080p @ 60fps", "40x Optical Zoom", "LWIR Thermal", "Laser Range Finder", "AI Detection", "Ethernet & USB"]
-      },
-      {
-        title: "Roads that Honk",
-        image: "/project-images/roadsthathonk.png",
-        description: "An innovative road-safety intervention deploying radar-enabled smart poles on hazardous hairpin bends (e.g. Jammu-Srinagar highway), one of the world's deadliest routes. These poles measure vehicle speed, communicate across bends, and emit a loud honking alert to oncoming drivers, prompting them to slow down before risk zones.",
-        specs: ["Speed Sensing Radar", "180m Range", "P10 LED Traffic Light", "Solar Power Backup", "-40°C to +50°C", "30°×16° Field of View"]
-      },
-      {
-        title: "81mm Mortar Telemetry Bomb",
-        image: "/project-images/3.81mm Mortar Telemetry System.jpeg",
-        description: "A telemetry-enabled 81mm mortar bomb designed for live tracking of projectile flight in real time. It transmits encrypted GNSS-based positional data to a receiver station for trajectory analysis and training support.",
-        specs: ["GNSS Tracking", "≤5m Accuracy", "VHF/UHF Transmission", "5km LoS Range", "Telemetry Data Output", "IP65 Receiver"]
-      },
-    ]
-  },
-  {
-    id: "simulators",
-    title: "Simulators",
-    icon: Brain,
-    products: [
-      {
-        title: "Simple Driving Simulator / Universal Driving Simulator",
-        image: "/project-images/Simpledrvingsimulater.png",
-        description: "A portable, steel-framed driving simulator equipped with essential vehicle controls and a 32\" display. Designed to train learners in basic handling and maneuvering techniques in a controlled, fuel-free environment.",
-        specs: ["Dimensions: 1800L×1000W×1800H mm", "Steel Frame", "32\" LED Display", "Steering, Gear, Accelerator", "Adjustable Seat", "1 KVA UPS"]
-      },
-      {
-        title: "VR Based Training Simulator",
-        image: "/project-images/Slide 21 - VR based Training Simulator(1).png",
-        description: "Compact, immersive VR simulator with 3DOF motion (pitch, roll, yaw) for realistic training across driving and flight scenarios, delivering high-fidelity visuals and responsive motion feedback.",
-        specs: ["Vehicle Types: Light vehicles, trucks, armored units, flight & helicopter", "VR Cabin: Ergonomic cockpit with steering/flight controls, pedals, and VR headset integration", "Instructor Station: Scenario creation, trainee monitoring, performance analytics, fault injection", "Display System: High-resolution VR headset with 360° immersive environment", "Motion System (3DOF): Pitch, roll, yaw with speeds up to 160°/s (roll/pitch) & 360°/s (yaw)", "Terrains & Modes: Urban, desert, mountain, off-road; day/night cycles with dynamic lighting"]
-      },
-      {
-        title: "Recovery Training Simulator",
-        image: recoveryTrainingImage,
-        description: "Advanced recovery training simulator for military vehicle operators, focusing on vehicle recovery techniques, towing operations, and emergency response procedures in various terrain conditions.",
-        specs: ["Recovery Operations", "Towing Training", "Emergency Response", "Terrain Simulation", "Instructor Control", "Performance Metrics"]
-      },
-      {
-        title: "Hill Driving Training Simulator",
-        image: hillDrivingImage,
-        description: "Specialized simulator for hill driving training, designed to prepare military drivers for challenging mountain terrains, steep gradients, and adverse weather conditions encountered in high-altitude operations.",
-        specs: ["Hill Terrain Simulation", "Gradient Training", "Weather Effects", "Altitude Simulation", "Safety Systems", "Real-time Feedback"]
-      }
-    ]
-  },
-  {
-    id: "fire-control",
-    title: "Fire Control Systems",
-    icon: Lock,
-    products: [
-      {
-        title: "ASTRA-E",
-        image: astraEImage,
-        description: "ASTRA-E is a lightweight, AI-powered electro-optic module equipped with picatinny rail for easy mount. It integrates real-time human detection, laser range finding, and wireless communication to assist shooters with precision targeting and commander-level situational awareness.",
-        specs: ["<800g Weight", "50mm Lens Camera", "10 TOPS AI Processor", "3.2\" Display", "Laser Range Finder", "Secure Wireless"]
-      },
-            {
-        title: "AI Based automated Target tracking NSVT for TK-90",
-        image: "/project-images/Slide 23 - NSVT(1).png",
-        description: "An IP-65 rated autonomous drone detection and neutralization system using AI-powered vision, seamlessly integrated with the T-90 AA turret for real-time threat engagement comprising the EOIR and GCS.",
-        specs: ["AI-Driven Detection", "Real-time Tracking", "Integrated Turret Control", "EO-IR System", "Ethernet & USB", "70m Range"]
-      },
-      {
-        title: "Remote Controlled Weapon System – LMG/MMG",
-        image: "/project-images/Slide 24 - RCWS.png",
-        description: "Remote Controlled Weapon System (RCWS) is a modular, AI enabled enemy detection and tracking system that can be controlled and fired at the enemy via GCS from distance of up to 1 KM.",
-        specs: ["Modular Platform", "LMG/MMG Compatible", "1 KM Range", "AI Detection", "Solar Power Compatible", "IP Compatible"]
-      },
-      {
-        title: "Ten AI Weapon System (TAIWS)",
-        image: "/project-images/Slide 25 - TAIWS(1).png",
-        description: "TAIWS is AI-based weapon system designed to enhance border surveillance and counter-infiltration operations. The system integrates advanced secondary vision technology (thermal and optical sensors) with a machine gun to enable target detection and engagement in low-visibility, rugged terrains like those along the LoC.",
-        specs: ["AI Integration", "Thermal Camera (2km)", "Optical Camera", "LoC Surveillance", "IP65 Rating", "Machine Gun Integration"]
-      }
-    ]
   }
 ];
 
@@ -182,35 +85,37 @@ const ProjectsSection = () => {
           </h2>
         </motion.div>
 
-        {/* Category Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-4 mb-12"
-        >
-          {productCategories.map((category) => {
-            const Icon = category.icon;
-            const isSelected = selectedCategory === category.id;
+        {/* Category Tabs (only shown when there is more than one category) */}
+        {productCategories.length > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex flex-wrap justify-center gap-4 mb-12"
+          >
+            {productCategories.map((category) => {
+              const Icon = category.icon;
+              const isSelected = selectedCategory === category.id;
 
-            return (
-              <motion.button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                  isSelected
-                    ? 'bg-accent text-white shadow-lg shadow-accent/20'
-                    : 'bg-card border border-border hover:border-accent text-foreground hover:text-accent'
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Icon className="w-4 h-4" />
-                {category.title}
-              </motion.button>
-            );
-          })}
-        </motion.div>
+              return (
+                <motion.button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    isSelected
+                      ? 'bg-accent text-white shadow-lg shadow-accent/20'
+                      : 'bg-card border border-border hover:border-accent text-foreground hover:text-accent'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Icon className="w-4 h-4" />
+                  {category.title}
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        )}
 
         {/* Products Grid */}
         <motion.div

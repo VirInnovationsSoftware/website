@@ -16,7 +16,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="text-primary-foreground/70 text-xs tracking-[0.2em] md:tracking-[0.4em] uppercase font-medium mb-6"
         >
-          Robotics · Defence · AI · IoT
+          Robotics · Defence · AI · Agri · Research
         </motion.p>
 
         <motion.h1
